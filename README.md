@@ -35,4 +35,4 @@ Al ser un proyecto Vanilla con Firebase vía CDN, no requiere Node.js ni proceso
 3. Abre el archivo `login.html` directamente en tu navegador.
 
 ---
-*Desarrollado con mucha dedicación para seguir mejorando mis habilidades como desarrollador web.* 👨‍💻
+*Desarrollado con mucha dedicación para seguir mejorando mis habilidades como desarrollador web.* 
