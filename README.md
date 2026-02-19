@@ -22,7 +22,7 @@ Una aplicación web desarrollada desde cero con **JavaScript** y conectada a la 
 
 Este proyecto nació como un reto para dominar los fundamentos del desarrollo web sin depender de frameworks externos (como React o Angular). Me ha permitido profundizar en:
 1. Manipulación avanzada del **DOM**.
-2. Gestión del asincronismo en JavaScript (`async` / `await` y Promesas).
+2. Gestión del asincronismo en JavaScript.
 3. Manejo de estado local vs. base de datos externa.
 4. Creación de componentes UI (como las ventanas modales) utilizando únicamente CSS y JS nativo.
 
