@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Diario Personal</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: #333;
+        }
+
+        main {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 800px;
+            margin-top: 20px;
+        }
+
+        header h1 {
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        header a {
+            color: white;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        #note-title {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1.2em;
+            font-weight: bold;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #search-input {
+            flex-grow: 2;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        #order-select {
+            flex-grow: 1;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .nota {
+            background: #ffffff;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #2c3e50;
+        }
+
+        .nota h3 {
+            margin-top: 0;
+            color: #007bff;
+            cursor: pointer;
+        }
+
+        .nota h3:hover {
+            text-decoration: underline;
+        }
+
+        .nota p {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .acciones-nota {
+            margin-top: 10px;
+        }
+
+        .edit-btn,
+        .delete-btn {
+            padding: 5px 10px;
+            font-size: 12px;
+            margin-right: 5px;
+            border-radius: 3px;
+            border: none;
+            cursor: pointer;
+            width: auto;
+        }
+
+        .edit-btn {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .edit-btn:hover {
+            background-color: #e67e22;
+        }
+
+        .delete-btn {
+            background-color: #ff4d4d;
+            color: white;
+        }
+
+        .delete-btn:hover {
+            background-color: #cc0000;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-contenido {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .cerrar-modal {
+            position: absolute;
+            right: 20px;
+            top: 10px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        .cerrar-modal:hover {
+            color: #333;
+        }
+
+        #modal-texto {
+            white-space: pre-wrap;
+            line-height: 1.8;
+            font-size: 1.1em;
+            color: #444;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #ddd;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Mi Diario Digital</h1>
+        <p>Hola, <span id="user-display">Invitado</span> | <a href="#" id="logout-link">Cerrar Sesión</a></p>
+    </header>
+    <main>
+        <section id="editor-section">
+            <h2>Nueva Entrada</h2>
+            <input type="text" id="note-title" placeholder="Título de tu entrada...">
+            <textarea id="note-content" placeholder="¿Qué tienes en mente hoy?"></textarea>
+            <br>
+            <button id="save-btn">Guardar Entrada</button>
+            <button id="clear-draft-btn" style="background-color: #95a5a6;">Limpiar Borrador</button>
+            <button id="clear-all-btn" style="background-color: #e74c3c; margin-bottom: 20px;">Borrar Todo el
+                Diario</button>
+        </section>
+
+        <hr>
+
+        <section id="diary-entries">
+            <h2>Tus Escritos</h2>
+
+            <div class="filters">
+                <input type="text" id="search-input" placeholder="Buscar por título...">
+                <select id="order-select">
+                    <option value="newest">Más recientes primero</option>
+                    <option value="oldest">Más antiguos primero</option>
+                    <option value="alpha">Orden alfabético (A-Z)</option>
+                </select>
+            </div>
+
+            <div id="entries-container"></div>
+        </section>
+    </main>
+
+    <div id="modal-lectura" class="modal">
+        <div class="modal-contenido">
+            <span class="cerrar-modal" onclick="cerrarModal()">&times;</span>
+            <h2 id="modal-titulo"></h2>
+            <small id="modal-fecha"></small>
+            <hr>
+            <div id="modal-texto"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Configuración de Firebase - CORRECTA
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFXo5TUGNJxGqZwEZpZLV0gJanvMkjFC0",
+            authDomain: "mi-diario-5302d.firebaseapp.com",
+            projectId: "mi-diario-5302d",
+            storageBucket: "mi-diario-5302d.firebasestorage.app",
+            messagingSenderId: "587893703272",
+            appId: "1:587893703272:web:75a3a5c182c61938db71dd",
+            measurementId: "G-5LYPEK8NWV"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Variables globales
+        let usuarioActual = null;
+        let notasGuardadas = [];
+        let editandoIndice = null;
+        let unsubscribeNotas = null;
+
+        // Elementos del DOM
+        const cajaTitulo = document.getElementById('note-title');
+        const cajaTexto = document.getElementById('note-content');
+        const botonGuardar = document.getElementById('save-btn');
+        const contenedorEntradas = document.getElementById('entries-container');
+        const inputBusqueda = document.getElementById('search-input');
+        const selectorOrden = document.getElementById('order-select');
+        const nombrePantalla = document.getElementById('user-display');
+        const miModal = document.getElementById('modal-lectura');
+
+        // Verificar autenticación
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                usuarioActual = user;
+                nombrePantalla.innerText = user.email;
+                escucharNotas();
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        // Escuchar cambios en tiempo real
+        function escucharNotas() {
+            if (unsubscribeNotas) unsubscribeNotas();
+
+            unsubscribeNotas = db.collection('notas')
+                .where('userId', '==', usuarioActual.uid)
+                .orderBy('timestamp', 'desc')
+                .onSnapshot((snapshot) => {
+                    notasGuardadas = [];
+                    snapshot.forEach((doc) => {
+                        notasGuardadas.push({ id: doc.id, ...doc.data() });
+                    });
+                    renderizarNotas();
+                }, (error) => {
+                    console.error("Error al cargar notas:", error);
+                    alert("Error al cargar las notas. Por favor, recarga la página.");
+                });
+        }
+
+        function renderizarNotas() {
+            contenedorEntradas.innerHTML = "";
+            let notasAMostrar = [...notasGuardadas];
+
+            const termino = inputBusqueda.value.toLowerCase();
+            notasAMostrar = notasAMostrar.filter(nota =>
+                nota.titulo.toLowerCase().includes(termino)
+            );
+
+            const criterio = selectorOrden.value;
+            if (criterio === "alpha") {
+                notasAMostrar.sort((a, b) => a.titulo.localeCompare(b.titulo));
+            } else if (criterio === "oldest") {
+                notasAMostrar.reverse();
+            }
+
+            if (notasAMostrar.length === 0) {
+                contenedorEntradas.innerHTML = "<p>No hay notas que coincidan.</p>";
+                return;
+            }
+
+            notasAMostrar.forEach((nota) => {
+                const article = document.createElement('article');
+                article.className = 'nota';
+
+                const previsualizacion = nota.contenido.length > 100
+                    ? nota.contenido.substring(0, 100) + '...'
+                    : nota.contenido;
+
+                article.innerHTML = `
+                    <h3 onclick="abrirModal('${nota.id}')">${nota.titulo}</h3>
+                    <p>${previsualizacion}</p>
+                    <div class="meta-data">
+                        <small>📅 ${nota.fecha}</small>
+                    </div>
+                    <div class="acciones-nota">
+                        <button class="edit-btn" onclick="prepararEdicion('${nota.id}')">Editar</button>
+                        <button class="delete-btn" onclick="borrarNota('${nota.id}')">Eliminar</button>
+                    </div>
+                `;
+                contenedorEntradas.appendChild(article);
+            });
+        }
+
+        // Guardar nota
+        botonGuardar.addEventListener('click', async () => {
+            const titulo = cajaTitulo.value.trim();
+            const contenido = cajaTexto.value.trim();
+
+            if (!titulo || !contenido) {
+                alert("Por favor, completa ambos campos.");
+                return;
+            }
+
+            botonGuardar.disabled = true;
+            botonGuardar.innerText = "Guardando...";
+
+            try {
+                if (editandoIndice !== null) {
+                    await db.collection('notas').doc(editandoIndice).update({
+                        titulo: titulo,
+                        contenido: contenido,
+                        fecha: new Date().toLocaleString() + " (editado)",
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    editandoIndice = null;
+                    botonGuardar.innerText = "Guardar Entrada";
+                    botonGuardar.style.backgroundColor = "#007bff";
+                } else {
+                    await db.collection('notas').add({
+                        userId: usuarioActual.uid,
+                        titulo: titulo,
+                        contenido: contenido,
+                        fecha: new Date().toLocaleString(),
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                limpiarFormulario();
+            } catch (error) {
+                console.error("Error al guardar nota:", error);
+                alert("Error al guardar la nota. Por favor, intenta de nuevo.");
+            } finally {
+                botonGuardar.disabled = false;
+                if (editandoIndice === null) {
+                    botonGuardar.innerText = "Guardar Entrada";
+                }
+            }
+        });
+
+        window.prepararEdicion = function (notaId) {
+            const nota = notasGuardadas.find(n => n.id === notaId);
+            if (!nota) return;
+
+            cajaTitulo.value = nota.titulo;
+            cajaTexto.value = nota.contenido;
+            editandoIndice = notaId;
+            botonGuardar.innerText = "Actualizar Cambios";
+            botonGuardar.style.backgroundColor = "#f39c12";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        window.borrarNota = async function (notaId) {
+            if (confirm("¿Seguro que quieres borrar esta nota?")) {
+                try {
+                    await db.collection('notas').doc(notaId).delete();
+                } catch (error) {
+                    console.error("Error al borrar nota:", error);
+                    alert("Error al borrar la nota. Por favor, intenta de nuevo.");
+                }
+            }
+        };
+
+        document.getElementById('clear-all-btn').addEventListener('click', async () => {
+            if (confirm("¡Vas a borrar TODO tu diario! ¿Estás seguro?")) {
+                try {
+                    const batch = db.batch();
+                    const snapshot = await db.collection('notas')
+                        .where('userId', '==', usuarioActual.uid)
+                        .get();
+
+                    snapshot.forEach((doc) => {
+                        batch.delete(doc.ref);
+                    });
+
+                    await batch.commit();
+                    alert("Diario borrado completamente.");
+                } catch (error) {
+                    console.error("Error al borrar diario:", error);
+                    alert("Error al borrar el diario. Por favor, intenta de nuevo.");
+                }
+            }
+        });
+
+        function limpiarFormulario() {
+            cajaTitulo.value = "";
+            cajaTexto.value = "";
+            editandoIndice = null;
+            botonGuardar.innerText = "Guardar Entrada";
+            botonGuardar.style.backgroundColor = "#007bff";
+        }
+
+        document.getElementById('clear-draft-btn').addEventListener('click', limpiarFormulario);
+
+        document.getElementById('logout-link').addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                await auth.signOut();
+                window.location.href = "login.html";
+            } catch (error) {
+                console.error("Error al cerrar sesión:", error);
+                alert("Error al cerrar sesión.");
+            }
+        });
+
+        inputBusqueda.addEventListener('input', renderizarNotas);
+        selectorOrden.addEventListener('change', renderizarNotas);
+
+        window.abrirModal = function (notaId) {
+            const nota = notasGuardadas.find(n => n.id === notaId);
+            if (!nota) return;
+
+            document.getElementById('modal-titulo').innerText = nota.titulo;
+            document.getElementById('modal-fecha').innerText = "Publicado el: " + nota.fecha;
+            document.getElementById('modal-texto').innerText = nota.contenido;
+            miModal.style.display = "block";
+        };
+
+        window.cerrarModal = function () {
+            miModal.style.display = "none";
+        };
+
+        window.addEventListener('click', function (event) {
+            if (event.target === miModal) cerrarModal();
+        });
+
+        window.addEventListener('keydown', function (event) {
+            if (event.key === "Escape") cerrarModal();
+        });
+    </script>
+</body>
+
+</html>

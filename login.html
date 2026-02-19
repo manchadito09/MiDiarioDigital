@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso - Mi Diario</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #333;
+        }
+
+        .login-card {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .input-group input {
+            display: block;
+            width: 100%;
+            margin-bottom: 15px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #34495e;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #1a252f;
+        }
+
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+
+        .error-text {
+            color: #e74c3c;
+            font-size: 0.85em;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .auth-switch {
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+
+        .auth-switch a {
+            color: #4ca1af;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body class="login-body">
+    <main class="login-card">
+        <h2 id="auth-title">Iniciar Sesión</h2>
+
+        <div class="input-group">
+            <input type="email" id="username" placeholder="Email">
+            <input type="password" id="password" placeholder="Contraseña (mínimo 6 caracteres)">
+        </div>
+
+        <button id="auth-btn">Entrar</button>
+
+        <p id="error-msg" class="error-text">Credenciales incorrectas</p>
+
+        <div class="auth-switch">
+            <p>¿No tienes cuenta? <a href="#" id="switch-auth">Regístrate aquí</a></p>
+        </div>
+    </main>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Configuración de Firebase - CORRECTA
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFXo5TUGNJxGqZwEZpZLV0gJanvMkjFC0",
+            authDomain: "mi-diario-5302d.firebaseapp.com",
+            projectId: "mi-diario-5302d",
+            storageBucket: "mi-diario-5302d.firebasestorage.app",
+            messagingSenderId: "587893703272",
+            appId: "1:587893703272:web:75a3a5c182c61938db71dd",
+            measurementId: "G-5LYPEK8NWV"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Referencias a elementos del DOM
+        const authTitle = document.getElementById('auth-title');
+        const authBtn = document.getElementById('auth-btn');
+        const switchAuth = document.getElementById('switch-auth');
+        const userIn = document.getElementById('username');
+        const passIn = document.getElementById('password');
+        const errorMsg = document.getElementById('error-msg');
+
+        let isLoginMode = true;
+
+        // Cambiar entre login y registro
+        switchAuth.addEventListener('click', (e) => {
+            e.preventDefault();
+            isLoginMode = !isLoginMode;
+
+            authTitle.innerText = isLoginMode ? "Iniciar Sesión" : "Crear Cuenta";
+            authBtn.innerText = isLoginMode ? "Entrar" : "Registrarse";
+            switchAuth.innerText = isLoginMode ? "Regístrate aquí" : "Inicia sesión aquí";
+            errorMsg.style.display = "none";
+        });
+
+        // Procesar login o registro con Firebase
+        authBtn.addEventListener('click', async () => {
+            const email = userIn.value.trim();
+            const pass = passIn.value.trim();
+
+            if (!email || !pass) {
+                showError("Por favor, rellena todos los campos");
+                return;
+            }
+
+            if (!email.includes('@')) {
+                showError("Por favor, ingresa un email válido");
+                return;
+            }
+
+            if (pass.length < 6) {
+                showError("La contraseña debe tener al menos 6 caracteres");
+                return;
+            }
+
+            authBtn.disabled = true;
+            authBtn.innerText = "Procesando...";
+
+            try {
+                if (isLoginMode) {
+                    // Iniciar sesión con Firebase
+                    await auth.signInWithEmailAndPassword(email, pass);
+                    // Firebase redirigirá automáticamente
+                } else {
+                    // Crear cuenta nueva con Firebase
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
+                    const user = userCredential.user;
+
+                    // Crear documento de usuario en Firestore
+                    await db.collection('usuarios').doc(user.uid).set({
+                        email: email,
+                        fechaCreacion: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    alert("¡Cuenta creada exitosamente! Ahora puedes iniciar sesión.");
+                    isLoginMode = true;
+                    authTitle.innerText = "Iniciar Sesión";
+                    authBtn.innerText = "Entrar";
+                    switchAuth.innerText = "Regístrate aquí";
+                    userIn.value = "";
+                    passIn.value = "";
+                }
+            } catch (error) {
+                console.error("Error de autenticación:", error);
+
+                let mensajeError = "Error desconocido";
+                switch (error.code) {
+                    case 'auth/email-already-in-use':
+                        mensajeError = "Este email ya está registrado";
+                        break;
+                    case 'auth/invalid-email':
+                        mensajeError = "Email inválido";
+                        break;
+                    case 'auth/user-not-found':
+                        mensajeError = "Usuario no encontrado";
+                        break;
+                    case 'auth/wrong-password':
+                        mensajeError = "Contraseña incorrecta";
+                        break;
+                    case 'auth/weak-password':
+                        mensajeError = "La contraseña debe tener al menos 6 caracteres";
+                        break;
+                    case 'auth/network-request-failed':
+                        mensajeError = "Error de conexión. Verifica tu internet";
+                        break;
+                    default:
+                        mensajeError = error.message;
+                }
+
+                showError(mensajeError);
+            } finally {
+                authBtn.disabled = false;
+                authBtn.innerText = isLoginMode ? "Entrar" : "Registrarse";
+            }
+        });
+
+        function showError(msg) {
+            errorMsg.innerText = msg;
+            errorMsg.style.display = "block";
+        }
+
+        // Permitir enviar con Enter
+        const manejarEnter = (evento) => {
+            if (evento.key === "Enter") {
+                authBtn.click();
+            }
+        };
+
+        userIn.addEventListener("keyup", manejarEnter);
+        passIn.addEventListener("keyup", manejarEnter);
+
+        // Verificar si el usuario ya está autenticado
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                window.location.href = "index.html";
+            }
+        });
+    </script>
+</body>
+
+</html>
